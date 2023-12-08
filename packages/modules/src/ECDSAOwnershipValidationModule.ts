@@ -4,10 +4,11 @@ import { Bytes, arrayify } from "ethers/lib/utils";
 import { ECDSAOwnershipValidationModuleConfig, ModuleVersion } from "./utils/Types";
 import { DEFAULT_ECDSA_OWNERSHIP_MODULE, ECDSA_OWNERSHIP_MODULE_ADDRESSES_BY_VERSION } from "./utils/Constants";
 import { BaseValidationModule } from "./BaseValidationModule";
+import { WalletClientSigner } from "@alchemy/aa-core";
 
 // Could be renamed with suffix API
 export class ECDSAOwnershipValidationModule extends BaseValidationModule {
-  signer!: Signer;
+  signer!: Signer | WalletClientSigner;
 
   moduleAddress!: string;
 
@@ -40,7 +41,7 @@ export class ECDSAOwnershipValidationModule extends BaseValidationModule {
     return this.moduleAddress;
   }
 
-  async getSigner(): Promise<Signer> {
+  async getSigner(): Promise<Signer | WalletClientSigner> {
     return Promise.resolve(this.signer);
   }
 
@@ -60,22 +61,27 @@ export class ECDSAOwnershipValidationModule extends BaseValidationModule {
   }
 
   async signUserOpHash(userOpHash: string): Promise<string> {
-    const sig = await this.signer.signMessage(arrayify(userOpHash));
+    const sig = await this.signMessage(arrayify(userOpHash));
 
     Logger.log("ecdsa signature ", sig);
 
     return sig;
   }
 
-  async signMessage(message: Bytes | string): Promise<string> {
-    let signature = await this.signer.signMessage(message);
-
-    const potentiallyIncorrectV = parseInt(signature.slice(-2), 16);
-    if (![27, 28].includes(potentiallyIncorrectV)) {
-      const correctV = potentiallyIncorrectV + 27;
-      signature = signature.slice(0, -2) + correctV.toString(16);
+  /**
+   * Signs a message using the appropriate method based on the type of signer.
+   *
+   * @param {Bytes | string | Uint8Array} message - The message to be signed.
+   * @returns {Promise<string>} A promise resolving to the signature or error message.
+   * @throws {Error} If the signer type is invalid or unsupported.
+   */
+  async signMessage(message: Bytes | string | Uint8Array): Promise<string> {
+    if ("signTransaction" in this.signer) {
+      return super.signMessageSigner(message as Bytes | string, this.signer as Signer);
+    } else if (!("signTransaction" in this.signer)) {
+      return super.signMessageWalletClientSigner(message as Uint8Array | string, this.signer as WalletClientSigner);
+    } else {
+      throw new Error("Invalid signer type");
     }
-
-    return signature;
   }
 }

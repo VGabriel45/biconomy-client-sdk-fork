@@ -14,7 +14,7 @@ import {
 import { resolveProperties } from "ethers/lib/utils";
 import { deepHexlify, sendRequest, getTimestampInSeconds, HttpMethod, Logger, RPC_PROVIDER_URLS } from "@biconomy/common";
 import { transformUserOP } from "./utils/HelperFunction";
-import { UserOpReceiptIntervals } from "./utils/Constants";
+import { DEFAULT_ENTRYPOINT_ADDRESS, UserOpReceiptIntervals } from "./utils/Constants";
 import { JsonRpcProvider } from "@ethersproject/providers";
 
 /**
@@ -31,6 +31,12 @@ export class Bundler implements IBundler {
       ...UserOpReceiptIntervals,
       ...bundlerConfig.userOpReceiptIntervals,
     };
+
+    if (!bundlerConfig.entryPointAddress) {
+      this.bundlerConfig.entryPointAddress = DEFAULT_ENTRYPOINT_ADDRESS;
+    } else {
+      this.bundlerConfig.entryPointAddress = bundlerConfig.entryPointAddress;
+    }
   }
 
   private getBundlerUrl(): string {
@@ -79,7 +85,7 @@ export class Bundler implements IBundler {
    * @returns Promise<UserOpResponse>
    */
   async sendUserOp(userOp: UserOperation): Promise<UserOpResponse> {
-    const chainId = this.bundlerConfig.chainId;
+    const chainId = this.bundlerConfig.chainId!;
     // transformUserOP will convert all bigNumber values to string
     userOp = transformUserOP(userOp);
     const hexifiedUserOp = deepHexlify(await resolveProperties(userOp));

@@ -1,7 +1,7 @@
 import { ChainId } from "@biconomy/core-types";
 
 // eslint-disable-next-line no-unused-vars
-export const UserOpReceiptIntervals: { [key in ChainId]?: number } = {
+export const UserOpReceiptIntervals: { [key in ChainId | number]?: number } = {
   [ChainId.MAINNET]: 10000,
   [ChainId.GOERLI]: 5000,
   [ChainId.POLYGON_MUMBAI]: 5000,
@@ -26,3 +26,5 @@ export const UserOpReceiptIntervals: { [key in ChainId]?: number } = {
   [ChainId.OPBNB_MAINNET]: 5000,
   [ChainId.OPBNB_TESTNET]: 5000,
 };
+
+export const DEFAULT_ENTRYPOINT_ADDRESS = "0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789";

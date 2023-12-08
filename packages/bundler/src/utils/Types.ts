@@ -4,7 +4,7 @@ import { ChainId, UserOperation } from "@biconomy/core-types";
 export type Bundlerconfig = {
   bundlerUrl: string;
   entryPointAddress?: string;
-  chainId: ChainId;
+  chainId?: ChainId;
   // eslint-disable-next-line no-unused-vars
   userOpReceiptIntervals?: { [key in ChainId]?: number };
 };
