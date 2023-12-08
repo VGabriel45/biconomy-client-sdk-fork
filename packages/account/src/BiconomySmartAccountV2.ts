@@ -1,5 +1,5 @@
 import { JsonRpcProvider } from "@ethersproject/providers";
-import { ethers, BigNumberish, BytesLike, BigNumber } from "ethers";
+import { ethers, BigNumberish, BytesLike, BigNumber, Signer } from "ethers";
 import { BaseSmartAccount } from "./BaseSmartAccount";
 import { Bytes, getCreate2Address, hexConcat, keccak256, solidityKeccak256 } from "ethers/lib/utils";
 import {
@@ -10,8 +10,8 @@ import {
   SmartAccount_v200__factory,
   SmartAccountFactory_v200__factory,
 } from "@biconomy/common";
-import { BiconomyTokenPaymasterRequest, BiconomySmartAccountV2Config, CounterFactualAddressParam, BuildUserOpOptions } from "./utils/Types";
-import { BaseValidationModule, ModuleInfo } from "@biconomy/modules";
+import { BiconomyTokenPaymasterRequest, BiconomySmartAccountV2Config, CounterFactualAddressParam, BuildUserOpOptions, AuthorizationModuleType } from "./utils/Types";
+import { BaseValidationModule, ECDSAOwnershipValidationModule, ModuleInfo, MultiChainValidationModule } from "@biconomy/modules";
 import { UserOperation, Transaction } from "@biconomy/core-types";
 import NodeClient from "@biconomy/node-client";
 import INodeClient from "@biconomy/node-client";
@@ -33,6 +33,7 @@ import {
   PROXY_CREATION_CODE,
 } from "./utils/Constants";
 import log from "loglevel";
+import { WalletClientSigner } from "@alchemy/aa-core";
 
 type UserOperationKey = keyof UserOperation;
 export class BiconomySmartAccountV2 extends BaseSmartAccount {
@@ -69,6 +70,12 @@ export class BiconomySmartAccountV2 extends BaseSmartAccount {
     await instance.init();
     instance.factoryAddress = biconomySmartAccountConfig.factoryAddress ?? DEFAULT_BICONOMY_FACTORY_ADDRESS; // This would be fetched from V2
 
+    if (biconomySmartAccountConfig.biconomyPaymasterApiKey) {
+      instance.paymaster = new BiconomyPaymaster({
+        paymasterUrl: `https://paymaster.biconomy.io/api/v1/${biconomySmartAccountConfig.chainId}/${biconomySmartAccountConfig.biconomyPaymasterApiKey}`,
+      });
+    }
+
     const defaultFallbackHandlerAddress =
       instance.factoryAddress === DEFAULT_BICONOMY_FACTORY_ADDRESS
         ? DEFAULT_FALLBACK_HANDLER_ADDRESS
@@ -80,8 +87,17 @@ export class BiconomySmartAccountV2 extends BaseSmartAccount {
 
     instance.implementationAddress = biconomySmartAccountConfig.implementationAddress ?? BICONOMY_IMPLEMENTATION_ADDRESSES_BY_VERSION.V2_0_0;
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    instance.defaultValidationModule = biconomySmartAccountConfig.defaultValidationModule;
+    if (biconomySmartAccountConfig.defaultValidationModule) {
+      instance.defaultValidationModule = biconomySmartAccountConfig.defaultValidationModule;
+    } else if (biconomySmartAccountConfig.authorizationModuleType) {
+      instance.defaultValidationModule = await instance.checkAndCreateModule(biconomySmartAccountConfig.signer, biconomySmartAccountConfig.authorizationModuleType);
+    } else {
+      instance.defaultValidationModule = await ECDSAOwnershipValidationModule.create({
+        signer: biconomySmartAccountConfig.signer,
+        moduleAddress: biconomySmartAccountConfig.authorizationModuleType,
+      });
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     instance.activeValidationModule = biconomySmartAccountConfig.activeValidationModule ?? instance.defaultValidationModule;
 
@@ -94,6 +110,26 @@ export class BiconomySmartAccountV2 extends BaseSmartAccount {
     instance.nodeClient = new NodeClient({ txServiceUrl: nodeClientUrl ?? NODE_CLIENT_URL });
 
     return instance;
+  }
+
+  async checkAndCreateModule(signer: Signer | WalletClientSigner, authorizationModuleType: AuthorizationModuleType): Promise<BaseValidationModule> {
+    switch (authorizationModuleType) {
+      case AuthorizationModuleType.ECDSA_OWNERSHIP:
+        return ECDSAOwnershipValidationModule.create({
+          signer,
+          moduleAddress: authorizationModuleType,
+        });
+      case AuthorizationModuleType.MULTICHAIN:
+        return MultiChainValidationModule.create({
+          signer,
+          moduleAddress: authorizationModuleType,
+        });
+      default:
+        return ECDSAOwnershipValidationModule.create({
+          signer,
+          moduleAddress: authorizationModuleType,
+        });
+    }
   }
 
   async _getAccountContract(): Promise<SmartAccount_v200> {

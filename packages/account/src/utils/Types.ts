@@ -3,9 +3,10 @@ import { ChainId } from "@biconomy/core-types";
 import { BigNumberish } from "ethers";
 import { IBundler } from "@biconomy/bundler";
 import { IPaymaster, PaymasterFeeQuote } from "@biconomy/paymaster";
-import { BaseValidationModule, ModuleInfo } from "@biconomy/modules";
+import { BaseValidationModule, DEFAULT_ECDSA_OWNERSHIP_MODULE, DEFAULT_MULTICHAIN_MODULE, ModuleInfo } from "@biconomy/modules";
 import { Provider } from "@ethersproject/providers";
 import { GasOverheads } from "./Preverificaiton";
+import { WalletClientSigner } from "@alchemy/aa-core";
 
 export type EntryPointAddresses = {
   [address: string]: string;
@@ -40,7 +41,7 @@ export interface BaseSmartAccountConfig {
   // owner?: Signer // can be in child classes
   index?: number;
   provider?: Provider;
-  entryPointAddress: string;
+  entryPointAddress?: string;
   accountAddress?: string;
   overheads?: Partial<GasOverheads>;
   paymaster?: IPaymaster; // PaymasterAPI
@@ -64,13 +65,21 @@ export type BiconomySmartAccountConfig = {
   nodeClientUrl?: string;
 };
 
+export enum AuthorizationModuleType {
+  ECDSA_OWNERSHIP = DEFAULT_ECDSA_OWNERSHIP_MODULE,
+  MULTICHAIN = DEFAULT_MULTICHAIN_MODULE
+}
+
 export interface BiconomySmartAccountV2Config extends BaseSmartAccountConfig {
   factoryAddress?: string;
   implementationAddress?: string;
   defaultFallbackHandler?: string;
+  biconomyPaymasterApiKey?: string;
+  signer: Signer | WalletClientSigner;
   rpcUrl?: string; // as good as Provider
   nodeClientUrl?: string; // very specific to Biconomy
-  defaultValidationModule: BaseValidationModule;
+  authorizationModuleType?: AuthorizationModuleType;
+  defaultValidationModule?: BaseValidationModule;
   activeValidationModule?: BaseValidationModule;
 }
 

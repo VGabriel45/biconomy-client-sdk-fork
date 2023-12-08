@@ -69,6 +69,7 @@ describe("BiconomySmartAccountV2 API Specs", () => {
     accountAPI = await BiconomySmartAccountV2.create({
       chainId: ChainId.GANACHE,
       rpcUrl: "http://127.0.0.1:8545",
+      signer: owner,
       // paymaster: paymaster,
       // bundler: bundler,
       entryPointAddress: entryPoint.address,
@@ -154,6 +155,7 @@ describe("BiconomySmartAccountV2 API Specs", () => {
     let accountAPI2 = await BiconomySmartAccountV2.create({
       chainId: ChainId.GANACHE,
       rpcUrl: "http://127.0.0.1:8545",
+      signer: owner,
       // paymaster: paymaster,
       // bundler: bundler,
       entryPointAddress: entryPoint.address,

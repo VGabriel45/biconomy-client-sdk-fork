@@ -77,7 +77,7 @@ export interface CreateSessionDataParams {
 export interface MultiChainValidationModuleConfig extends BaseValidationModuleConfig {
   moduleAddress?: string;
   version?: ModuleVersion;
-  signer: Signer;
+  signer: Signer | WalletClientSigner;
 }
 
 export type MultiChainUserOpDto = {
