@@ -58,16 +58,16 @@ artifacts
 deployments
 
 # lockfiles
-packages/core-types/package-lock.json
-packages/account/package-lock.json
-packages/common/package-lock.json
-packages/bundler/package-lock.json
-packages/node-client/package-lock.json
-packages/paymaster/package-lock.json
-packages/particle-auth/package-lock.json
-packages/web3-auth/package-lock.json
-packages/web3-auth-native/package-lock.json
-packages/transak/package-lock.json
+src/core-types/package-lock.json
+src/account/package-lock.json
+src/common/package-lock.json
+src/bundler/package-lock.json
+src/node-client/package-lock.json
+src/paymaster/package-lock.json
+src/particle-auth/package-lock.json
+src/web3-auth/package-lock.json
+src/web3-auth-native/package-lock.json
+src/transak/package-lock.json
 package-lock.json
 yarn.lock
 

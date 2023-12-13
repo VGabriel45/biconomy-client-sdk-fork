@@ -4,21 +4,18 @@
     "module": "commonjs",
     "declaration": true,
     "sourceMap": true,
+    "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
     "lib": ["es2020"],
+    "outDir": "./dist",
+    "baseUrl": "./src",
     "types": ["node", "jest"]
   },
-  "include": ["packages/**/*"],
-  "references": [
-    { "path": "./packages/common" },
-    { "path": "./packages/core-types" },
-    { "path": "./packages/node-client" },
-    { "path": "./packages/web3-auth" },
-    { "path": "./packages/web3-auth-native" },
-    { "path": "./packages/transak" },
-    { "path": "./packages/bundler" },
-    { "path": "./packages/paymaster" },
-    { "path": "./packages/account" }
+  "include": ["./src/**/*"],
+  "exclude": [
+    "node_modules",
+    "build",
+    "dist",
   ]
 }
